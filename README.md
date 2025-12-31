@@ -45,7 +45,7 @@ npm run build
 
 ## 提供するツール
 
-### add_furigana
+### gen_furigana
 
 日本語テキストにふりがなを付けます。
 

@@ -138,7 +138,7 @@ const server = new McpServer({
 
 // Register the furigana tool
 server.tool(
-  "add_furigana",
+  "gen_furigana",
   "日本語テキストにふりがな（ひらがな読み）を付けます。漢字かな混じりのテキストを入力すると、各単語の読み方を返します。",
   {
     text: z.string().describe("ふりがなを付けたい日本語テキスト"),
