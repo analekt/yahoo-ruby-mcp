@@ -26,6 +26,30 @@ npm run build
 
 ## Claude Desktop での設定
 
+### 方法1: npx経由で実行（推奨）
+
+ローカルにリポジトリを配置せず、npm経由で実行する方法です。
+
+`claude_desktop_config.json` に以下を追加してください：
+
+```json
+{
+  "mcpServers": {
+    "yahoo-furigana": {
+      "command": "npx",
+      "args": ["-y", "yahoo-furigana-mcp"],
+      "env": {
+        "YAHOO_CLIENT_ID": "あなたのClient ID"
+      }
+    }
+  }
+}
+```
+
+### 方法2: ローカルから実行
+
+リポジトリをクローンして実行する方法です。
+
 `claude_desktop_config.json` に以下を追加してください：
 
 ```json
@@ -98,6 +122,26 @@ npm run build
 ## 特徴
 
 - **自動チャンク分割**: 4KBを超える長いテキストも自動的に分割して処理します。文の区切り（。！？など）で分割するため、自然な結果が得られます。
+
+## npm公開（開発者向け）
+
+このパッケージをnpmに公開する手順：
+
+```bash
+# ビルド
+npm run build
+
+# パッケージの内容を確認
+npm pack --dry-run
+
+# npmにログイン（初回のみ）
+npm login
+
+# 公開
+npm publish
+```
+
+公開後、ユーザーは `npx yahoo-furigana-mcp` でローカルにリポジトリを配置せずに利用できます。
 
 ## 制限事項
 
