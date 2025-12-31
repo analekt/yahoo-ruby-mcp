@@ -1,0 +1,14 @@
+# Source files
+src/
+tsconfig.json
+
+# Development files
+.git/
+.gitignore
+*.log
+
+# macOS
+.DS_Store
+
+# Testing and local files
+client-id.txt
