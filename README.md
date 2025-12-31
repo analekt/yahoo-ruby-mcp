@@ -33,7 +33,7 @@ npm run build
   "mcpServers": {
     "yahoo-furigana": {
       "command": "node",
-      "args": ["/path/to/yahoo-ruby-mcp/dist/index.js"],
+      "args": ["/path/to/yahoo-furigana-mcp/dist/index.js"],
       "env": {
         "YAHOO_CLIENT_ID": "あなたのClient ID"
       }
@@ -42,7 +42,7 @@ npm run build
 }
 ```
 
-`/path/to/yahoo-ruby-mcp` は実際のパスに置き換えてください。
+`/path/to/yahoo-furigana-mcp` は実際のパスに置き換えてください。
 
 ## 提供するツール
 
