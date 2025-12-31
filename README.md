@@ -8,6 +8,7 @@ Yahoo! JAPAN テキスト解析の[ふりがなAPI（V2）](https://developer.ya
 
 - Node.js 18以上
 - Yahoo! JAPAN デベロッパーネットワークの Client ID（アプリケーションID）
+  - [Yahoo! ID連携 v2 アプリケーションの登録](https://developer.yahoo.co.jp/yconnect/v2/registration.html)から取得できます
 
 ## セットアップ
 
@@ -55,7 +56,15 @@ npm run build
 |------|-----|------|------|
 | `text` | string | ○ | ふりがなを付けたい日本語テキスト |
 | `grade` | number | - | 学年指定（1-8）。指定した学年までに習う漢字にはふりがなを付けません |
-| `include_roman` | boolean | - | ローマ字も含めた詳細出力にするか（デフォルト: false） |
+| `output_format` | string | - | 出力形式（デフォルト: `bracket`） |
+
+#### output_format の値
+
+| 値 | 説明 | 出力例 |
+|----|------|--------|
+| `bracket` | 括弧形式（デフォルト） | `漢字（かんじ）` |
+| `ruby` | HTMLルビ形式 | `<ruby>漢字<rt>かんじ</rt></ruby>` |
+| `roman` | ローマ字付き詳細形式 | `漢字: かんじ (kanji)` |
 
 #### grade の値
 
@@ -72,9 +81,18 @@ npm run build
 
 #### 使用例
 
+**bracket形式（デフォルト）:**
+
 ```
 入力: "漢字の読み方を教えてください"
 出力: "漢字（かんじ）の読（よ）み方（かた）を教（おし）えてください"
+```
+
+**ruby形式:**
+
+```
+入力: "漢字の読み方"
+出力: "<ruby>漢字<rt>かんじ</rt></ruby>の<ruby>読<rt>よ</rt></ruby>み<ruby>方<rt>かた</rt></ruby>"
 ```
 
 ## 制限事項

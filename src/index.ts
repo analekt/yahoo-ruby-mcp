@@ -81,13 +81,16 @@ async function getFurigana(
   return (await response.json()) as ApiResponse;
 }
 
-// Format the result for display
-function formatResult(result: FuriganaResult): string {
-  const lines: string[] = [];
+// Output format types
+type OutputFormat = "bracket" | "ruby" | "roman";
+
+// Format with bracket notation: 漢字（かんじ）
+function formatBracket(result: FuriganaResult): string {
+  const parts: string[] = [];
 
   for (const word of result.word) {
     if (word.furigana && word.surface !== word.furigana) {
-      lines.push(`${word.surface}（${word.furigana}）`);
+      parts.push(`${word.surface}（${word.furigana}）`);
     } else if (word.subword) {
       const subParts = word.subword
         .map((sw) => {
@@ -97,13 +100,38 @@ function formatResult(result: FuriganaResult): string {
           return sw.surface;
         })
         .join("");
-      lines.push(subParts);
+      parts.push(subParts);
     } else {
-      lines.push(word.surface);
+      parts.push(word.surface);
     }
   }
 
-  return lines.join("");
+  return parts.join("");
+}
+
+// Format with HTML ruby tags: <ruby>漢字<rt>かんじ</rt></ruby>
+function formatRuby(result: FuriganaResult): string {
+  const parts: string[] = [];
+
+  for (const word of result.word) {
+    if (word.furigana && word.surface !== word.furigana) {
+      parts.push(`<ruby>${word.surface}<rt>${word.furigana}</rt></ruby>`);
+    } else if (word.subword) {
+      const subParts = word.subword
+        .map((sw) => {
+          if (sw.furigana && sw.surface !== sw.furigana) {
+            return `<ruby>${sw.surface}<rt>${sw.furigana}</rt></ruby>`;
+          }
+          return sw.surface;
+        })
+        .join("");
+      parts.push(subParts);
+    } else {
+      parts.push(word.surface);
+    }
+  }
+
+  return parts.join("");
 }
 
 // Format with roman characters
@@ -136,6 +164,19 @@ const server = new McpServer({
   version: "1.0.0",
 });
 
+// Format result based on output format
+function formatResult(result: FuriganaResult, format: OutputFormat): string {
+  switch (format) {
+    case "ruby":
+      return formatRuby(result);
+    case "roman":
+      return formatWithRoman(result);
+    case "bracket":
+    default:
+      return formatBracket(result);
+  }
+}
+
 // Register the furigana tool
 server.tool(
   "gen_furigana",
@@ -150,12 +191,14 @@ server.tool(
       .describe(
         "学年指定（1-8）。指定した学年までに習う漢字にはふりがなを付けません。1=小1, 2=小2, ..., 6=小6, 7=中学, 8=それ以上"
       ),
-    include_roman: z
-      .boolean()
+    output_format: z
+      .enum(["bracket", "ruby", "roman"])
       .optional()
-      .describe("ローマ字も含めた詳細出力にするかどうか（デフォルト: false）"),
+      .describe(
+        "出力形式。bracket=括弧形式「漢字（かんじ）」、ruby=HTMLルビ形式「<ruby>漢字<rt>かんじ</rt></ruby>」、roman=ローマ字付き詳細形式（デフォルト: bracket）"
+      ),
   },
-  async ({ text, grade, include_roman }) => {
+  async ({ text, grade, output_format }) => {
     try {
       const response = await getFurigana(text, grade);
 
@@ -183,9 +226,7 @@ server.tool(
         };
       }
 
-      const formatted = include_roman
-        ? formatWithRoman(response.result)
-        : formatResult(response.result);
+      const formatted = formatResult(response.result, output_format || "bracket");
 
       return {
         content: [
