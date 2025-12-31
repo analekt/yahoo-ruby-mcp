@@ -72,7 +72,7 @@ async function getFurigana(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "User-Agent": "Yahoo AppID: " + CLIENT_ID,
+      "User-Agent": `Yahoo AppID: ${CLIENT_ID}`,
     },
     body: JSON.stringify(requestBody),
   });
