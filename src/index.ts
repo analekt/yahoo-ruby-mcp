@@ -14,6 +14,9 @@ if (!CLIENT_ID) {
 
 const API_ENDPOINT = "https://jlp.yahooapis.jp/FuriganaService/V2/furigana";
 
+// Maximum text size per request (in bytes) - leaving room for JSON overhead
+const MAX_CHUNK_SIZE = 3000;
+
 // Types for API response
 interface SubWord {
   surface: string;
@@ -79,6 +82,100 @@ async function getFurigana(
   }
 
   return (await response.json()) as ApiResponse;
+}
+
+// Split text into chunks at sentence boundaries
+function splitTextIntoChunks(text: string): string[] {
+  const encoder = new TextEncoder();
+  const textBytes = encoder.encode(text);
+
+  // If text fits in one chunk, return as is
+  if (textBytes.length <= MAX_CHUNK_SIZE) {
+    return [text];
+  }
+
+  const chunks: string[] = [];
+
+  // Split by sentence-ending punctuation (Japanese and English)
+  const sentences = text.split(/(?<=[。．！？\n])/);
+
+  let currentChunk = "";
+
+  for (const sentence of sentences) {
+    const testChunk = currentChunk + sentence;
+    const testBytes = encoder.encode(testChunk);
+
+    if (testBytes.length > MAX_CHUNK_SIZE) {
+      if (currentChunk) {
+        chunks.push(currentChunk);
+        currentChunk = sentence;
+      } else {
+        // Single sentence is too long, split by characters
+        let remaining = sentence;
+        while (remaining) {
+          let end = remaining.length;
+          while (encoder.encode(remaining.slice(0, end)).length > MAX_CHUNK_SIZE && end > 1) {
+            end = Math.floor(end / 2);
+          }
+          // Try to find a better break point
+          while (end < remaining.length && encoder.encode(remaining.slice(0, end + 1)).length <= MAX_CHUNK_SIZE) {
+            end++;
+          }
+          chunks.push(remaining.slice(0, end));
+          remaining = remaining.slice(end);
+        }
+      }
+    } else {
+      currentChunk = testChunk;
+    }
+  }
+
+  if (currentChunk) {
+    chunks.push(currentChunk);
+  }
+
+  return chunks;
+}
+
+// Process text with chunking support
+async function processTextWithChunking(
+  text: string,
+  grade: number | undefined,
+  format: OutputFormat
+): Promise<string> {
+  const chunks = splitTextIntoChunks(text);
+
+  if (chunks.length === 1) {
+    // Single chunk, process normally
+    const response = await getFurigana(text, grade);
+    if (response.error) {
+      throw new Error(`APIエラー: ${response.error.message} (code: ${response.error.code})`);
+    }
+    if (!response.result) {
+      throw new Error("結果が取得できませんでした");
+    }
+    return formatResult(response.result, format);
+  }
+
+  // Multiple chunks, process each and combine
+  const results: string[] = [];
+
+  for (let i = 0; i < chunks.length; i++) {
+    const response = await getFurigana(chunks[i], grade);
+
+    if (response.error) {
+      throw new Error(`APIエラー (チャンク ${i + 1}/${chunks.length}): ${response.error.message}`);
+    }
+
+    if (!response.result) {
+      throw new Error(`結果が取得できませんでした (チャンク ${i + 1}/${chunks.length})`);
+    }
+
+    results.push(formatResult(response.result, format));
+  }
+
+  // For roman format, join with newlines; for others, join directly
+  return format === "roman" ? results.join("\n") : results.join("");
 }
 
 // Output format types
@@ -200,33 +297,8 @@ server.tool(
   },
   async ({ text, grade, output_format }) => {
     try {
-      const response = await getFurigana(text, grade);
-
-      if (response.error) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `APIエラー: ${response.error.message} (code: ${response.error.code})`,
-            },
-          ],
-          isError: true,
-        };
-      }
-
-      if (!response.result) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: "結果が取得できませんでした",
-            },
-          ],
-          isError: true,
-        };
-      }
-
-      const formatted = formatResult(response.result, output_format || "bracket");
+      const format = output_format || "bracket";
+      const formatted = await processTextWithChunking(text, grade, format);
 
       return {
         content: [
