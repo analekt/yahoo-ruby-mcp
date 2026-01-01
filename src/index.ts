@@ -292,12 +292,12 @@ server.tool(
       .enum(["bracket", "ruby", "roman"])
       .optional()
       .describe(
-        "出力形式。bracket=括弧形式「漢字（かんじ）」、ruby=HTMLルビ形式「<ruby>漢字<rt>かんじ</rt></ruby>」、roman=ローマ字付き詳細形式（デフォルト: bracket）"
+        "出力形式。bracket=括弧形式「漢字（かんじ）」、ruby=HTMLルビ形式「<ruby>漢字<rt>かんじ</rt></ruby>」、roman=ローマ字付き詳細形式（デフォルト: ruby）"
       ),
   },
   async ({ text, grade, output_format }) => {
     try {
-      const format = output_format || "bracket";
+      const format = output_format || "ruby";
       const formatted = await processTextWithChunking(text, grade, format);
 
       return {
