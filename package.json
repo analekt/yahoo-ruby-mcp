@@ -1,6 +1,6 @@
 {
   "name": "yahoo-furigana-mcp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MCP server for Yahoo! JAPAN Furigana API",
   "type": "module",
   "main": "dist/index.js",
